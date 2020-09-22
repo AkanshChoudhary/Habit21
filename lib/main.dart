@@ -1,16 +1,23 @@
 import 'dart:async';
-import 'package:habit_21_1/21_day_calendar.dart';
-import 'package:habit_21_1/loginScreen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:habit_21_1/DayCalendar.dart';
+import 'package:habit_21_1/LoginScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'habit_name.dart';
+import 'package:habit_21_1/NewHabitCreationScreen.dart';
+import 'package:habit_21_1/profile.dart';
+import 'Data.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-void main() { runApp(MaterialApp(
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MaterialApp(
       home: SplashScreen(),
       debugShowCheckedModeBanner: false,
     ));
-     Firebase.initializeApp();}
+     }
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -20,12 +27,21 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    User user=FirebaseAuth.instance.currentUser;
+    if (user==null){
     Timer(
-        Duration(seconds: 5),
-        () => Navigator.push(
+        Duration(seconds: 3),
+        () => Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => LoginScreen())));
+  }
+     else
+       {
+         Timer(
+             Duration(seconds: 3),
+                 () => Navigator.pushReplacement(
+                 context, MaterialPageRoute(builder: (context) => HomeScreen())));
+       }
   }
 
   @override
@@ -44,15 +60,87 @@ class _SplashScreenState extends State<SplashScreen> {
 
 class HomeScreen extends StatefulWidget {
   String name;
-  HomeScreen(this.name);
+  String userId;
+  dynamic gender;
+  List<String> custom=new List();
+  List<dynamic> allCustomHabits=new List();
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  @override
+  void initState() {
+    FirebaseFirestore.instance.collection('user+${FirebaseAuth.instance.currentUser
+        .uid}').doc('Id').get().then((value) {
+      Map <dynamic,dynamic> idMap= value.data();
+      setState(() {
+        widget.gender=idMap['Gender'];
+        widget.name=idMap['Name'];
+        if(idMap['Allcustomhabits']!=null)
+          {
+            widget.allCustomHabits=idMap['Allcustomhabits'];
+          }
 
+      });
+    });
+    // TODO: implement initState
+    super.initState();
+  }
   void _onItemSelected(int _newIndex) {
+    String habitName;
+    if(_newIndex==0)
+      {
+        showDialog(context: context, builder: (_)=>AlertDialog(
+          backgroundColor: Colors.white,
+          content: TextField(
+            onChanged: (String m) {
+            habitName = m;
+            },
+            style: TextStyle(color: Colors.black),
+            decoration: InputDecoration(
+                hintText: 'Enter Habit Name',
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                hintStyle: TextStyle(color: Colors.black)),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              onPressed: (){
+                Navigator.pop(context);
+              },
+              child: Text('Cancel',style: TextStyle(color: Colors.blue),),
+            ),
+            FlatButton(
+              onPressed: (){
+                widget.custom.add(habitName);
+                setState(() {
+                  widget.allCustomHabits.add(habitName);
+                });
+                Map<dynamic,dynamic> idMap={'Allcustomhabits' : widget.allCustomHabits};
+                Map<String, dynamic> customMap = {'IncompleteCustomHabits': widget.custom};
+                FirebaseFirestore.instance.collection('user+${FirebaseAuth.instance.currentUser
+                    .uid}').doc('IncompleteHabits').set(customMap).then((value){
+                      FirebaseFirestore.instance.collection('user+${FirebaseAuth.instance.currentUser
+                          .uid}').doc('Id').set(idMap).then((value) {
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>CreateHabit.newhabit(habitName)));
+                      });
+                });
+              },
+              child: Text('Save',style: TextStyle(color: Colors.blue),),
+            ),
+          ],
+        ));
+      }
+    else if(_newIndex==1){
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => Profile()));
+    }
     setState(() {
       _selectedIndex = _newIndex;
     });
@@ -92,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         flex: 1,
                         child: SvgPicture.asset(
-                          'assets/person.svg',
+                          (widget.gender=='Male')?'assets/person.svg':'assets/woman.svg',
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -108,13 +196,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: GridView.count(
                     crossAxisCount: 2,
                     children: List.generate(
-                        6,
+                        6+widget.allCustomHabits.length,
                         (index) => GestureDetector(
                               onTap: () {
-                                Navigator.push(
+                                (index<6)?Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => Calendar(index)));
+                                        builder: (context) => Calendar(index))):showDialog(context: context, builder: (_)=>AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  content: Text('Please select where you want to go',style: TextStyle(color: Colors.black),),
+                                  actions: <Widget>[
+                                    FlatButton(
+                                      onPressed: (){
+
+                                      },
+                                      child: Text('View Task',style: TextStyle(color: Colors.blue),),
+                                    ),
+                                    FlatButton(
+                                      onPressed: (){
+                                        Navigator.push(context, MaterialPageRoute( builder: (context) => CreateHabit()));
+                                      },
+                                      child: Text('Edit custom habit',style: TextStyle(color: Colors.blue),),
+                                    ),
+                                  ],
+                                ));
+
                               },
                               child: Opacity(
                                 opacity: 0.9,
@@ -130,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             child: Padding(
                                               padding: const EdgeInsets.all(20),
                                               child: SvgPicture.asset(
-                                                  'assets/${images.elementAt(index)}',
+                                                  (index<6)?'assets/${images.elementAt(index)}':'assets/sketch.svg',
                                                   fit: BoxFit.contain),
                                             ),
                                           ),
@@ -139,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             child: Padding(
                                               padding: const EdgeInsets.all(2),
                                               child: Text(
-                                                titles.elementAt(index),
+                                                  (index<6)?titles.elementAt(index):widget.allCustomHabits.elementAt(index-6),
                                                 style: TextStyle(fontSize: 16),
                                               ),
                                             ),
