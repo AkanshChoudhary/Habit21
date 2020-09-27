@@ -1,4 +1,4 @@
-import 'package:habit_21_1/main.dart';
+import 'main.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -121,8 +121,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           FirebaseAuth.instance
                               .signInAnonymously()
                               .then((value) {
-                            Map<String, dynamic> idMap = {'Gender': dropdownvalue,
-                               'Name': name};
+                            Map<String, dynamic> idMap = {
+                              'Gender': dropdownvalue,
+                              'Name': name
+                            };
                             FirebaseFirestore.instance
                                 .collection(
                                     'user+${FirebaseAuth.instance.currentUser.uid}')
