@@ -1,4 +1,4 @@
-import 'package:habit_21_2/main.dart';
+import 'main.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -121,8 +121,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           FirebaseAuth.instance
                               .signInAnonymously()
                               .then((value) {
-                            Map<String, dynamic> idMap = {'Gender': dropdownvalue,
-                              'Name': name};
+                            Map<String, dynamic> idMap = {
+                              'Gender': dropdownvalue,
+                              'Name': name
+                            };
                             FirebaseFirestore.instance
                                 .collection(
                                 'user+${FirebaseAuth.instance.currentUser.uid}')
@@ -146,8 +148,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     Opacity(
                       opacity: (widget.loading) ? 1 : 0,
-                      child: CircularProgressIndicator(
-                        backgroundColor: Colors.white,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          backgroundColor: Colors.white,
+                        ),
                       ),
                     ),
                   ],
