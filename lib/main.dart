@@ -256,12 +256,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Expanded(
                         flex: 1,
-                        child: SvgPicture.asset(
-                          (widget.gender == 'Male')
-                              ? 'assets/person.svg'
-                              : 'assets/woman.svg',
+                        child: (widget.gender == 'Male')
+                          ?SvgPicture.asset(
+                              'assets/person.svg',
                           fit: BoxFit.contain,
-                        ),
+                        ):(widget.gender == 'Female')?
+                        SvgPicture.asset(
+                          'assets/woman.svg',
+                          fit: BoxFit.contain,
+                        ):Container(),
                       ),
                     ],
                   ),
