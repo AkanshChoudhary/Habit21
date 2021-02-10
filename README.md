@@ -26,7 +26,7 @@ new habits to create a good habit or destroy a bad one.
 
 ### Installing
 
-* You can install the apk file from here.
+* You can install the apk file from [here](https://github.com/AkanshChoudhary/Habit21/blob/master/app-release.apk).
 
 ## App Images
 
